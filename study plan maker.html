@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFSK Plan Maker</title>
+    <style>
+        body {
+            background-color: lightgrey;
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .sidebar {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 20%;
+            max-width: 200px;
+            margin-right: 20px;
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .schedule-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 80%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+        .schedule-item {
+            margin-bottom: 10px;
+        }
+        .schedule-item label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .schedule-item input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        .schedule-item button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: center;
+        }
+        td {
+            cursor: text;
+        }
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>My Plans</h2>
+        <ul id="planList"></ul>
+    </div>
+    <div class="main-content">
+        <div class="schedule-container">
+            <h1>NFSK Plan Maker</h1>
+            <div class="actions">
+                <input type="text" id="planName" placeholder="Enter plan name">
+                <button onclick="savePlan()">Save Plan</button>
+                <button onclick="resetPlan()">format</button>
+            </div>
+            <div class="schedule-item">
+                <label for="rows">Number of Rows:</label>
+                <input type="number" id="rows" name="rows" min="1" placeholder="Enter number of rows">
+            </div>
+            <div class="schedule-item">
+                <label for="columns">Number of Columns:</label>
+                <input type="number" id="columns" name="columns" min="1" placeholder="Enter number of columns">
+            </div>
+            <div class="schedule-item">
+                <label for="headerColor">Header Background Color:</label>
+                <input type="color" id="headerColor" name="headerColor">
+            </div>
+            <div class="schedule-item">
+                <label for="cellColor">Cell Background Color:</label>
+                <input type="color" id="cellColor" name="cellColor">
+            </div>
+            <div class="schedule-item">
+                <button onclick="generateTable()">Generate Table</button>
+            </div>
+        </div>
+        <div class="schedule-container" id="tableContainer"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', loadPlans);
+
+        function generateTable() {
+            const rows = document.getElementById('rows').value;
+            const columns = document.getElementById('columns').value;
+            const headerColor = document.getElementById('headerColor').value;
+            const cellColor = document.getElementById('cellColor').value;
+
+            if (rows && columns && headerColor && cellColor) {
+                const tableContainer = document.getElementById('tableContainer');
+                tableContainer.innerHTML = ''; // Clear previous table
+
+                const table = document.createElement('table');
+
+                for (let i = 0; i < rows; i++) {
+                    const row = document.createElement('tr');
+                    for (let j = 0; j < columns; j++) {
+                        const cell = document.createElement(i === 0 ? 'th' : 'td');
+                        if (i !== 0) {
+                            cell.contentEditable = true;
+                        }
+                        cell.textContent = i === 0 ? `Header ${j + 1}` : `Row ${i}, Cell ${j + 1}`;
+                        cell.style.backgroundColor = i === 0 ? headerColor : cellColor;
+                        row.appendChild(cell);
+                    }
+                    table.appendChild(row);
+                }
+                tableContainer.appendChild(table);
+            } else {
+                alert('Please fill in all fields');
+            }
+        }
+
+        function savePlan() {
+            const table = document.querySelector('table');
+            const planName = document.getElementById('planName').value;
+            if (table && planName) {
+                localStorage.setItem(planName, table.outerHTML);
+                alert('Plan saved!');
+                loadPlans();
+            } else {
+                alert('Please generate a table and enter a plan name first.');
+            }
+        }
+
+        function loadPlans() {
+            const planList = document.getElementById('planList');
+            planList.innerHTML = ''; // Clear previous list
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const listItem = document.createElement('li');
+                listItem.textContent = key;
+                listItem.onclick = () => openPlanInNewPage(key);
+                planList.appendChild(listItem);
+            }
+        }
+
+        function openPlanInNewPage(planName) {
+            const savedPlan = localStorage.getItem(planName);
+            if (savedPlan) {
+                const newWindow = window.open('', '_blank');
+                newWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>{my plans}</title>
+                        <style>
+                            body {
+                                background-color: lightgrey;
+                                font-family: Arial, sans-serif;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                height: 100vh;
+                                margin: 0;
+                                padding: 20px;
+                            }
+                            table {
+                                width: 80%;
+                                border-collapse: collapse;
+                                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                                background-color: white;
+                            }
+                            table, th, td {
+                                border: 1px solid black;
+                            }
+                            th, td {
+                                padding: 8px;
+                                text-align: center;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        ${savedPlan}
+                    </body>
+                    </html>
+                `);
+            }
+        }
+
+        function resetPlan() {
+            localStorage.clear();
+            location.reload();
+        }
+    </script>
+</body>
+</html>
